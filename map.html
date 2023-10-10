@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Water Life</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+    body { margin: 0; padding: 0;  background-color: #333;}
+    .container {
+        display: flex;
+        align-items: flex-start;
+    }
+    .map-container {
+        flex: 3;
+        background-color: #f5f5f5;
+        padding: 20px;
+    }
+    h1 {
+    text-align: center;
+    padding: 10px;
+    font-size: 40px;
+    position: relative;
+    background: linear-gradient(45deg, #49bfea, #1924e9);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    font-family: "Raleway", sans-serif;
+    /* Otros estilos aquí */
+    }
+
+    .map {
+        height: 980px;
+        width: 80%;
+        margin: 0 auto;
+    }
+    .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    }
+    .marker {
+        display: block;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+    }
+    .left-content {
+    background-color: #222; /* Fondo oscuro */
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Sombra para decorar */
+    border-radius: 5px; /* Bordes redondeados */
+    flex: 1; /* La parte izquierda ocupa todo el espacio disponible */
+    color: #fff; /* Texto blanco */
+    }
+    /* Estilo para el contenedor del texto izquierdo */
+    .text-container {
+        background-color: #0099cc; /* Color de fondo relacionado con el agua */
+        padding: 20px; /* Espaciado interno */
+        border-radius: 10px; /* Bordes redondeados */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Sombra suave */
+        margin-right: 20px; /* Espacio entre el mapa y el texto (ajusta según tu diseño) */
+        text-align: center;
+    }
+
+    .text-container p {
+        color: #fff; /* Color de texto para el párrafo */
+        font-family: "Arial", sans-serif; /* Cambiar la fuente a Arial o tu fuente preferida */
+        font-size: 16px; /* Tamaño de fuente para el párrafo */
+        line-height: 1.5; /* Espaciado entre líneas */
+    }
+
+        /* Estilo para el contenedor principal que contiene texto izquierdo y chatbot */
+    .content-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Estilo para el contenedor del chatbot */
+    .chatbot-container {
+        background-color: #f5f5f5; /* Color de fondo para el chatbot */
+        color : #000; /* Color de texto para el chatbot */
+        padding: 20px; /* Espaciado interno */
+        border-radius: 10px; /* Bordes redondeados */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Sombra suave */
+        margin-top: 50px; /* Espacio entre el texto izquierdo y el chatbot (ajusta según tu diseño) */
+        font-size: 16px;
+    }
+    .popup-image {
+  max-width: 100%; /* Establece el ancho máximo al 100% del contenedor */
+  max-height: 100%; /* Establece la altura máxima al 100% del contenedor */
+  display: block; /* Hace que la imagen sea un elemento en línea con márgenes automáticos */
+  margin: 0 auto; /* Centra horizontalmente la imagen en su contenedor */
+}
+    </style>
+  </head>
+  <body>
+    <!-- ====== Map Section ====== -->
+    
+    <div class="container">
+        <div class="left-content">
+            <h1>Water Life</h1>
+            <div class="text-container">
+            <p>Welcome to the Water Weather App!  you can explore real-time weather data and water conditions. You can also learn more about endangered animals in the area.</p>
+            <p>Select locations on the map to get detailed information.</p>
+            <p>If you see a link on the title, you can click on it, and you will see a QR code. By scanning the QR code with your mobile device, you can experience augmented reality with endemic or endangered animals, enjoy!</p>
+            </div>
+            <div class="chatbot-container">
+            <p>Hi, talk to me! I'm a chatbot designed to provide information and engage in conversations about endangered animals. Feel free to ask me any questions you have about these animals!</p>
+            </div>
+        </div>
+        
+        <section id="map" class="map">
+        <div id='map'></div>
+    </div> 
+    <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2h1Y3NoaW4iLCJhIjoiY2xuZ2JuaWRuMHVxbzJ0cGR3ZTZyMHU2MyJ9.uGH0u0A7EQ7lTslKWrUNcw';
+    const map = new mapboxgl.Map({
+        container: 'map', // container ID
+        style: 'mapbox://styles/shucshin/clngcpz5u080b01ns0uo27dkq', // style URL
+        // style: 'mapbox://styles/mapbox/satellite-v9',
+        // style: 'mapbox://styles/mapbox/streets-v12',
+        center: [-95, 21.5], // starting position [lng, lat]
+        zoom: 4.75, // starting zoom
+    });
+
+    // Add zoom and rotation controls to the map.
+    map.addControl(new mapboxgl.NavigationControl());
+
+    map.on('load', () => {
+        map.addSource('places', {
+            // This GeoJSON contains features that include an "icon"
+            // property. The value of the "icon" property corresponds
+            // to an image in the Mapbox Streets style's sprite.
+            'type': 'geojson',
+            'data': {
+                'type': 'FeatureCollection',
+                'features':[
+                    {
+                        'type': 'Feature', 
+                        'properties': {
+                            'description': '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', 
+                            'icon': 'space'
+                        }, 'geometry': {
+                            'type': 'Point', 
+                            'coordinates': [-87.36532, 20.317522]
+                        }
+                    }, {
+                        "type": "Feature", 
+                        "properties": {"description": "<strong>Garman<strong><p>species: fSPECIES</p><p>locality: fMX", "icon": "space"}, "geometry": {"type": "Point", "coordinates": [30298.0, -97.781562]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-87.546466, 20.057797]}}, {"type": "Feature", "properties": {"description": '<strong>(Legler<strong><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [29798.0, -102.156106]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-86.927986, 20.495817]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-87.18192, 20.559223]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-87.318028, 20.44689]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-86.80088, 20.470448]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-86.856462, 20.423653]}}, {"type": "Feature", "properties": {"description": "<strong>schmardae<strong><p>species: fschmardae</p><p>locality: fschmardae", "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-90.411268, 20.81513]}}, {"type": "Feature", "properties": {"description": "<strong>birostris<strong><p>species: fbirostris</p><p>locality: fbirostris", "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-104.553891, 19.106851]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-87.386949, 20.255978]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [30453.0, -105.580814]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [30396.0, -89.2405]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [-86.902721, 20.293886]}}, {"type": "Feature", "properties": {"description": "<strong>Gray<strong><p>species: fSPECIES</p><p>locality: fMX", "icon": "space"}, "geometry": {"type": "Point", "coordinates": [30649.0, -92.735701]}}, {"type": "Feature", "properties": {"description": '<a href="assets/img/codigodos.jpeg"><i ><strong>(Linnaeus<strong></i></a><p>species: fSPECIES</p><p>locality: fMX <img src="assets/img/codigodos.jpeg" class="popup-image">', "icon": "space"}, "geometry": {"type": "Point", "coordinates": [30632.0, -91.695255]
+                        }
+                    },{
+        'type': 'Feature',
+        'properties': {
+            'description': '<a href="assets/img/codigo.jpeg"><i ><strong>(USGS Monitoring Station 11044000)<strong></i></a><p>ph: 8.0</p><p>temperature: 23.0°C <img src="assets/img/codigo.jpeg" class="popup-image">',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-117.0829, 33.2826]
+        }
+},
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<a href="assets/img/codigo.jpeg"><i ><strong>(USGS Monitoring Station 09429490)<strong></i></a><p>ph: 8.2</p><p>temperature: 24.8°C <img src="assets/img/codigo.jpeg" class="popup-image">',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-114.28052, 32.530577]
+        }
+},
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<strong>(USGS Monitoring Station 08371500)<strong><p>ph: 7.6</p><p>temperature: nan°C',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-104.285, 29.3715]
+        }
+},
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<a href="assets/img/codigo.jpeg"><i > <strong>(USGS Monitoring Station 08374200)<strong></i></a><p>ph: 8.0</p><p>temperature: 24.3°C <img src="assets/img/codigo.jpeg" class="popup-image">' ,
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-104.171, 29.311]
+        }
+},
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<a href="assets/img/codigo.jpeg"><i > <strong>(USGS Monitoring Station 08374510)<strong></i></a><p>ph: 7.0</p><p>temperature: 21.9°C <img src="assets/img/codigo.jpeg" class="popup-image">',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-103.3552, 29.0917]
+        }
+},
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<strong>(USGS Monitoring Station 08375300)<strong><p>ph: 7.7</p><p>temperature: 28.8°C',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-102.583, 29.11]
+        }
+    },
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<strong>(USGS Monitoring Station 08449000)<strong><p>ph: 7.9</p><p>temperature: 24.2°C',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-101.0842, 29.5748]
+        }
+    },
+{
+        'type': 'Feature',
+        'properties': {
+            'description': '<a href="assets/img/codigotre.jpeg"><i ><strong>(USGS Monitoring Station 08211200)<strong></i></a><p>ph: 8.1</p><p>temperature: 24.5°C <img src="assets/img/codigotre.jpeg" class="popup-image">',
+            'icon': 'space'
+        },
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [-97.4632, 27.5615]
+        }
+    }
+                ]
+            }
+        }); 
+
+        map.loadImage('https://cdn-icons-png.flaticon.com/512/2733/2733062.png', 
+            (error, image) => {
+            if (error) throw error;
+            // Add the loaded image to the style's sprite with the ID 'space'.
+            map.addImage('space', image);  
+        });
+
+
+        // Add a layer showing the places.
+        map.addLayer({
+            'id': 'places',
+            'type': 'symbol',
+            'source': 'places',
+            'layout': {
+                'icon-image': 'space',
+                'icon-size': 0.075,
+                'icon-allow-overlap': true
+            }
+        });
+
+        // When a click event occurs on a feature in the places layer, open a popup at the
+        // location of the feature, with description HTML from its properties.
+        map.on('click', 'places', (e) => {
+        // Copy coordinates array.
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const description = e.features[0].properties.description;
+        
+        // Ensure that if the map is zoomed out such that multiple
+        // copies of the feature are visible, the popup appears
+        // over the copy being pointed to.
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+        
+        new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(description)
+        .addTo(map);
+        });
+        
+        // Change the cursor to a pointer when the mouse is over the places layer.
+        map.on('mouseenter', 'places', () => {
+        map.getCanvas().style.cursor = 'pointer';
+        });
+        
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', 'places', () => {
+        map.getCanvas().style.cursor = '';
+        });
+    });
+    </script> 
+    </section>
+
+  </body>
+</html>
